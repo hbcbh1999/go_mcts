@@ -1,9 +1,9 @@
-import gogame
+from game import GoGame
 import agent
 
 boardsize = 9
 
-game = gogame.GoGame(boardsize)
+game = GoGame(boardsize)
 
 agent = agent.Agent()
 

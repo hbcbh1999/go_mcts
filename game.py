@@ -24,7 +24,7 @@ class GoGame:
         self.winner = None
         self.history = []
     def play(self,vertex):
-        if vertex != pass:
+        if vertex != 'pass':
             self.env.play(self.current_color,vertex)
             self.history.append(self.env.get_state())
         elif (vertex == last_vertex and vertex == 'pass') or vertex == 'resign':
