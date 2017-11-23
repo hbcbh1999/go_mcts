@@ -2,7 +2,7 @@ import sys
 sys.path.append('/home/rick/project/pygo')
 import pygo
 import os.path
-import numpy as np
+import pickle
 
 def swap_color(color):
     if color == 'black':
@@ -27,17 +27,19 @@ class GoGame:
         if vertex != 'pass':
             self.env.play(self.current_color,vertex)
             self.history.append(self.env.get_state())
-        elif (vertex == last_vertex and vertex == 'pass') or vertex == 'resign':
+        elif (vertex == self.last_vertex and vertex == 'pass') or vertex == 'resign':
             self.end = True
-            self.winner = env.get_winner()
+            self.winner = self.env.get_winner()
+        self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
     def print_board(self):
-        print self.showboard()
+        print self.env.showboard()
     def legal_states(self):
-        return try_all_legal(self.current_color)
+        return self.env.try_all_legal(self.current_color)
     def save(self):
         n = 0
-        while os.path.isfile('./data/ep%d.npy'%n):
+        while os.path.isfile('./data/ep%d'%n):
             n += 1
         _to_save = [self.winner, self.history]
-        np.save('./data/ep%d.npy'%n,_to_save)
+        with open('./data/ep%d'%n,'w') as f:
+            pickle.dump(_to_save,f)
