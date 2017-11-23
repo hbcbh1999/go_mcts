@@ -9,16 +9,17 @@ agent = agent.Agent()
 
 interactive = False
 
-games_to_play = 100
+games_to_play = 1
 
 while True:
 
     if interactive:
+        game.print_board()
         vertex = raw_input('%s plays:'%game.current_color)
         if vertex == 'agent':
-            vertex = agent.play(game.current_color,game.legal_states)
+            vertex = agent.play(game.current_color,game.legal_states())
     else:
-        vertex = agent.play(game.current_color,game.legal_states)
+        vertex = agent.play(game.current_color,game.legal_states())
     game.play(vertex) 
 
     if game.end:
@@ -31,5 +32,9 @@ while True:
         else:
             game.save()
             games_to_play -= 1
-            game.reset()
-
+            if games_to_play == 0:
+                agent.save()
+                break
+            else:
+                game.reset()
+        
