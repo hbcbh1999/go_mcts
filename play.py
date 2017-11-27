@@ -1,15 +1,21 @@
 from game import GoGame
 import agent
+import sys
+
+if len(sys.argv)>1:
+    cycle = int(sys.argv[1])
+else:
+    cycle = 1e9
 
 boardsize = 9
 
 game = GoGame(boardsize)
 
-agent = agent.Agent()
+agent = agent.Agent(eps=1.0/(1+cycle))
 
 interactive = False
 
-games_to_play = 1
+games_to_play = 1000
 
 while True:
 
@@ -30,11 +36,13 @@ while True:
             else:
                 break
         else:
-            game.save()
             games_to_play -= 1
+            game.save('./data/ep%d'%games_to_play)
+            print '\rGames remaining:%d'%games_to_play,
+            sys.stdout.flush()
             if games_to_play == 0:
-                agent.save()
                 break
             else:
                 game.reset()
+            
         
