@@ -25,10 +25,14 @@ class GoGame:
         self.history = []
     def play(self,vertex):
         if vertex != 'pass':
-            self.env.play(self.current_color,vertex)
+            if vertex == 'genmove':
+                self.env.genmove(self.current_color)
+            else:
+                self.env.play(self.current_color,vertex)
             self.history.append(self.env.get_state())
         elif (vertex == self.last_vertex and vertex == 'pass') or vertex == 'resign':
             self.end = True
+#            print self.env.final_score()
             self.winner = self.env.get_winner()
         self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
@@ -36,10 +40,7 @@ class GoGame:
         print self.env.showboard()
     def legal_states(self):
         return self.env.try_all_legal(self.current_color)
-    def save(self):
-        n = 0
-        while os.path.isfile('./data/ep%d'%n):
-            n += 1
+    def save(self,file_name):
         _to_save = [self.winner, self.history]
-        with open('./data/ep%d'%n,'w') as f:
+        with open(file_name,'w') as f:
             pickle.dump(_to_save,f)
