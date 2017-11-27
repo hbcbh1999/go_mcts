@@ -4,7 +4,8 @@ import numpy as np
 
 
 class Agent:
-    def __init__(self):
+    def __init__(self,eps):
+        self.eps = eps
         self.model = Model()
         self.sess = tf.Session()
         self.model.load(self.sess)
@@ -21,12 +22,13 @@ class Agent:
 
         batch = [_states,_b_cap,_w_cap]
 
-        _result = self.evaluate(batch)
-
-        if color == 'black':
-            idx = np.argmax(_result)
+        if np.random.random() < self.eps:
+            idx = np.random.randint(_w_cap.shape[0])
         else:
-            idx = np.argmin(_result)
+            _result = self.evaluate(batch)
+            if color == 'black':
+                idx = np.argmax(_result)
+            else:
+                idx = np.argmin(_result)
         return states[idx][0]
-    def save(self):
-        self.model.save(self.sess)
+
