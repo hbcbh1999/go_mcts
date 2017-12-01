@@ -35,7 +35,7 @@ class GoGame:
                 self.winner = 'draw'
         elif vertex != 'pass':
             self.env.play(self.current_color,vertex)
-            self.history.append(self.env.board)
+        self.history.append(self.env.board)
         self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
     def print_board(self):
