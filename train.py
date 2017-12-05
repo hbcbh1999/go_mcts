@@ -11,33 +11,23 @@ import argparse
 ARGS
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size',type=int,help='Batch size (default:32)')
-parser.add_argument('--epochs',type=int,help='Training epochs (default:10)')
-parser.add_argument('--data_dir',type=str,help='Training data directories (default:./data/ep*)')
+parser.add_argument('--batch_size',default=32,type=int,help='Batch size (default:32)')
+parser.add_argument('--epochs',default=10,type=int,help='Training epochs (default:10)')
+parser.add_argument('--data_dir',default=['./data'],nargs='*',help='Training data directories (default:./data/ep*)')
 args = parser.parse_args()
 
-if args.batch_size:
-    batch_size = args.batch_size
-else:
-    batch_size = 32
-
-if args.epochs:
-    epochs = args.epochs
-else:
-    epochs = 10
-
-if args.data_dir:
-    data_dir = args.data_dir + '/ep*'
-else:
-    data_dir = './data/ep*'
+batch_size = args.batch_size
+epochs = args.epochs
+data_dir = args.data_dir
 
 
 """ LOAD DATA """
 
+list_of_data = []
+for _d in data_dir:
+    list_of_data += glob.glob(_d+'/ep*') 
+
 episodes = []
-
-list_of_data = glob.glob(data_dir)
-
 for file_name in list_of_data:
     with open(file_name,'r') as f:
         episodes.append(pickle.load(f))
