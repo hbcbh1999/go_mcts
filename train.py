@@ -6,7 +6,7 @@ import os
 import sys
 import glob
 import argparse
-
+import random
 """
 ARGS
 """
@@ -14,12 +14,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--batch_size',default=32,type=int,help='Batch size (default:32)')
 parser.add_argument('--epochs',default=10,type=int,help='Training epochs (default:10)')
 parser.add_argument('--data_dir',default=['./data'],nargs='*',help='Training data directories (default:./data/ep*)')
+parser.add_argument('--n_episodes',default=-1,type=int,help='Number of training episodes (randomly chosen)')
 args = parser.parse_args()
 
 batch_size = args.batch_size
 epochs = args.epochs
 data_dir = args.data_dir
-
+n_episodes = args.n_episodes
 
 """ LOAD DATA """
 
@@ -27,11 +28,15 @@ list_of_data = []
 for _d in data_dir:
     list_of_data += glob.glob(_d+'/ep*') 
 
+if n_episodes == -1 or n_episodes > len(list_of_data):
+    _list_eps = list_of_data
+elif n_episodes < len(list_of_data):
+    _list_eps = random.sample(list_of_data,n_episodes)
+
 episodes = []
 for file_name in list_of_data:
     with open(file_name,'r') as f:
         episodes.append(pickle.load(f))
-
 
 _states = []
 _b_cap = []
