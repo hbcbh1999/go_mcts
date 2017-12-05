@@ -10,35 +10,22 @@ import random
 ARGUMENTS
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--interactive', help='Text interactive interface', action='store_true')
-parser.add_argument('--cycle', type=int, help='Number of cycle')
-parser.add_argument('--black', choices=['agent','random'], help='AI for black')
-parser.add_argument('--white', choices=['agent','random'], help='AI for white')
-parser.add_argument('--ngames', type=int, help='Number of episodes to play')
-parser.add_argument('--save', help='Save self-play episodes', action='store_true')
+parser.add_argument('--interactive', default=False, help='Text interactive interface', action='store_true')
+parser.add_argument('--cycle', default=-1, type=int, help='Number of cycle')
+parser.add_argument('--black', default='random', choices=['agent','random'], help='AI for black')
+parser.add_argument('--white', default='random', choices=['agent','random'], help='AI for white')
+parser.add_argument('--ngames', default=500, type=int, help='Number of episodes to play')
+parser.add_argument('--save', default=False, help='Save self-play episodes', action='store_true')
+parser.add_argument('--save_dir', default='./data',type=str,help='Directory for save')
 args = parser.parse_args()
 
 interactive = args.interactive
+cycle = args.cycle
+black = args.black
+white = args.white
+ngames = args.ngames
 save = args.save
-if args.cycle:
-    cycle = args.cycle
-else:
-    cycle = 1e9
-
-if args.black:
-    black = args.black
-else:
-    black = 'random'
-
-if args.white:
-    white = args.white
-else:
-    white = 'random'
-
-if args.ngames:
-    ngames = args.ngames
-else:
-    ngames = 500
+save_dir = args.save_dir
 
 """
 SOME INITS
@@ -47,8 +34,11 @@ boardsize = 9
 
 game = GoGame(boardsize)
 
-agent = Agent(eps=1.0/(1+cycle))
-#agent = agent.Agent(eps=0)
+if black == 'agent' or white == 'agent' or interactive:
+    if cycle == -1:
+        agent = Agent(eps=0)
+    else:
+        agent = Agent(eps=1.0/(1+cycle))
 
 ai_color = {'black':black, 'white':white}
 
@@ -93,9 +83,9 @@ while True:
             ngames -= 1
             if save:
                 _n = 0
-                while os.path.isfile('./data/ep%d'%_n):
+                while os.path.isfile('%s/ep%d'%(save_dir,_n)):
                     _n += 1
-                game.save('./data/ep%d'%_n)
+                game.save('%s/ep%d'%(save_dir,_n))
             print '\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]),
             sys.stdout.flush()
             if ngames == 0:
