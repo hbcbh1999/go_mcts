@@ -11,8 +11,9 @@ import argparse
 ARGS
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--batch_size',type=int,help='Batch size')
-parser.add_argument('--epochs',type=int,help='Training epochs')
+parser.add_argument('--batch_size',type=int,help='Batch size (default:32)')
+parser.add_argument('--epochs',type=int,help='Training epochs (default:10)')
+parser.add_argument('--data_dir',type=str,help='Training data directories (default:./data/ep*)')
 args = parser.parse_args()
 
 if args.batch_size:
@@ -25,14 +26,17 @@ if args.epochs:
 else:
     epochs = 10
 
-
+if args.data_dir:
+    data_dir = args.data_dir + '/ep*'
+else:
+    data_dir = './data/ep*'
 
 
 """ LOAD DATA """
 
 episodes = []
 
-list_of_data = glob.glob('./data/ep*')
+list_of_data = glob.glob(data_dir)
 
 for file_name in list_of_data:
     with open(file_name,'r') as f:
@@ -95,7 +99,7 @@ with tf.Session() as sess:
         #batch = [_states[idx],_b_cap[idx],_w_cap[idx],_label[idx]]
         batch = [_states[idx],_label[idx]]
         
-        loss = m.train(sess,batch)
+        loss = m.train(sess,batch,i)
 
         loss_ma = decay * loss_ma + ( 1 - decay ) * loss
 
