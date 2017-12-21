@@ -38,16 +38,28 @@ class Model:
 
         state_sym = pipeline(self.state)
 
-        y = tf.layers.conv2d(self.state,filters=16,kernel_size=2,activation=tf.nn.relu,name='conv1')
+        n_filters = 32
+
+        y = tf.layers.conv2d(self.state,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv1')
+#        y = tf.layers.batch_normalization(y,name='bn1',training=self.training,fused=True,renorm=True)
+        y = tf.layers.conv2d(y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv2')
+#        y = tf.layers.batch_normalization(y,name='bn2',training=self.training,fused=True,renorm=True)
+        y = tf.layers.conv2d(y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv3')
+#        y = tf.layers.batch_normalization(y,name='bn3',training=self.training,fused=True,renorm=True)
         y = tf.layers.flatten(y)
-        y = tf.layers.dense(y,64,activation=tf.nn.relu,name='dense1')
+        y = tf.layers.dense(y,512,activation=tf.nn.relu,name='dense1')
         y = tf.layers.dense(y,1,name='output')
 
         losses = []
         for states in state_sym:
-            _y = tf.layers.conv2d(states,filters=16,kernel_size=2,activation=tf.nn.relu,name='conv1',reuse=True)
+            _y = tf.layers.conv2d(states,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv1',reuse=True)
+#            _y = tf.layers.batch_normalization(_y,name='bn1',training=self.training,fused=True,renorm=True,reuse=True)
+            _y = tf.layers.conv2d(_y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv2',reuse=True)
+#            _y = tf.layers.batch_normalization(_y,name='bn2',training=self.training,fused=True,renorm=True,reuse=True)
+            _y = tf.layers.conv2d(_y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv3',reuse=True)
+#            _y = tf.layers.batch_normalization(_y,name='bn3',training=self.training,fused=True,renorm=True,reuse=True)
             _y = tf.layers.flatten(_y)
-            _y = tf.layers.dense(_y,64,activation=tf.nn.relu,name='dense1',reuse=True)
+            _y = tf.layers.dense(_y,512,activation=tf.nn.relu,name='dense1',reuse=True)
             _y = tf.layers.dense(_y,1,name='output',reuse=True)
             _loss = tf.losses.sigmoid_cross_entropy(self.label,_y)
             losses.append(_loss)
@@ -60,16 +72,19 @@ class Model:
 
         self.optimizer = tf.train.AdamOptimizer()
 #        self.optimizer = tf.train.RMSPropOptimizer(0.001)
-    #    self.optimizer = tf.train.GradientDescentOptimizer(0.01)
-        self.train_step = self.optimizer.minimize(self.loss,name='train_step')
-    #            g_step = tf.Variable(0,trainable=False) 
-    #           lr_init = 0.1
-    #          lr = tf.train.exponential_decay(lr_init,g_step,5000,0.5,staircase=True)
-    #            self.optimizer = tf.train.MomentumOptimizer(lr,0.9,use_nesterov=True)
+#        self.optimizer = tf.train.GradientDescentOptimizer(0.01)
+        self.g_step = tf.placeholder(tf.int32,name='g_step')
+#        lr_init = 0.1
+#        lr = tf.train.exponential_decay(lr_init,self.g_step,20000,0.1,staircase=True)
+#        self.optimizer = tf.train.MomentumOptimizer(lr_init,0.9,use_nesterov=True)
     #            self.optimizer = tf.train.GradientDescentOptimizer(0.01)
-    def train(self,sess,batch):
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            self.train_step = self.optimizer.minimize(self.loss,name='train_step')
+
+    def train(self,sess,batch,step):
 #        _dict = {self.state:batch[0], self.cap_w:batch[1], self.cap_b:batch[2], self.label:batch[3]}
-        _dict = {self.state:batch[0], self.label:batch[1], self.training:True}
+        _dict = {self.state:batch[0], self.label:batch[1], self.training:True, self.g_step:step}
         _loss, _ = sess.run([self.loss,self.train_step],feed_dict=_dict)
         return _loss
 
@@ -104,6 +119,7 @@ class Model:
             self.logit = self.graph.get_tensor_by_name('logit:0')
             self.prob = self.graph.get_tensor_by_name('prob:0')
             self.loss = self.graph.get_tensor_by_name('loss:0')
+            self.g_step = self.graph.get_tensor_by_name('g_step:0')
             self.train_step = self.graph.get_operation_by_name('train_step')
         except IOError:
             print 'Model does not exist, building a new one...'
