@@ -1,4 +1,5 @@
 import tensorflow as tf
+import sys
 import shutil
 IMG_SIZE = (9,9,1)
 
