@@ -86,7 +86,7 @@ while True:
                 while os.path.isfile('%s/ep%d'%(save_dir,_n)):
                     _n += 1
                 game.save('%s/ep%d'%(save_dir,_n))
-            print '\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]),
+            sys.stdout.write('\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]))
             sys.stdout.flush()
             if ngames == 0:
                 break

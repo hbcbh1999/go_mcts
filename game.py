@@ -39,7 +39,7 @@ class GoGame:
         self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
     def print_board(self):
-        print self.env.board
+        sys.stdout.write(self.env.board)
     def legal_states(self):
         return self.env.legals[self.current_color]
     def save(self,file_name):

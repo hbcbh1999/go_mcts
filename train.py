@@ -94,7 +94,7 @@ with tf.Session() as sess:
     else:
         m.load(sess)
     
-    for i in xrange(iters):
+    for i in range(iters):
 
         idx = np.random.randint(len(_states),size=batch_size)
         #batch = [_states[idx],_b_cap[idx],_w_cap[idx],_label[idx]]
@@ -104,7 +104,7 @@ with tf.Session() as sess:
 
         loss_ma = decay * loss_ma + ( 1 - decay ) * loss
 
-        print '\riter:%d/%d loss: %.5f'%(i,iters,loss_ma),
+        sys.stdout.write('\riter:%d/%d loss: %.5f'%(i,iters,loss_ma))
         sys.stdout.flush()
     
     m.save(sess)

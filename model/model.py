@@ -101,7 +101,7 @@ class Model:
                 builder = tf.saved_model.builder.SavedModelBuilder(EXP_DIR)
                 break
             except AssertionError:
-                print 'WARNING: REMOVING PREVIOUS MODELS'
+                sys.stdout.write('WARNING: REMOVING PREVIOUS MODELS')
                 shutil.rmtree(EXP_DIR)
         builder.add_meta_graph_and_variables(sess,['graph'])
         builder.save()
@@ -122,6 +122,6 @@ class Model:
             self.g_step = self.graph.get_tensor_by_name('g_step:0')
             self.train_step = self.graph.get_operation_by_name('train_step')
         except IOError:
-            print 'Model does not exist, building a new one...'
+            sys.stdout.write('Model does not exist, building a new one...')
             self.build_graph()
             sess.run(tf.global_variables_initializer())
