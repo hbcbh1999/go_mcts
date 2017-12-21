@@ -11,12 +11,14 @@ import random
 ARGS
 """
 parser = argparse.ArgumentParser()
+parser.add_argument('--new',default=False,help='Create a new model instead of training the old one',action='store_true')
 parser.add_argument('--batch_size',default=32,type=int,help='Batch size (default:32)')
 parser.add_argument('--epochs',default=10,type=int,help='Training epochs (default:10)')
 parser.add_argument('--data_dir',default=['./data'],nargs='*',help='Training data directories (default:./data/ep*)')
 parser.add_argument('--n_episodes',default=-1,type=int,help='Number of training episodes (randomly chosen)')
 args = parser.parse_args()
 
+new = args.new
 batch_size = args.batch_size
 epochs = args.epochs
 data_dir = args.data_dir
@@ -82,11 +84,15 @@ n_data = len(_states)
 iters = epochs*n_data/batch_size
 
 loss_ma = 0
-decay = 0.95
+decay = 0.99
 
 with tf.Session() as sess:
     m = Model()
-    m.load(sess)
+    if new:
+        m.build_graph()
+        sess.run(tf.global_variables_initializer())
+    else:
+        m.load(sess)
     
     for i in xrange(iters):
 
