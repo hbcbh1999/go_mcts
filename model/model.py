@@ -1,7 +1,7 @@
 import tensorflow as tf
 import sys
 import shutil
-IMG_SIZE = (9,9,1)
+IMG_SIZE = (9,9,2)
 
 IMG_H = IMG_SIZE[0]
 IMG_W = IMG_SIZE[1]
@@ -31,45 +31,28 @@ class Model:
         self.graph.as_default()
 
         self.state = tf.placeholder(tf.float32,[None,IMG_H,IMG_W,IMG_C],name='state')
-#        self.cap_w = tf.placeholder(tf.float32,[None,1],name='cap_w')
-#        self.cap_b = tf.placeholder(tf.float32,[None,1],name='cap_b')
-        self.label = tf.placeholder(tf.float32,[None,1],name='label')
+        self.value_true = tf.placeholder(tf.float32,[None,1],name='value_true')
+        self.policy_true = tf.placeholder(tf.float32,[None,9*9+1],name='policy_true')
         self.training = tf.placeholder(tf.bool,name='training')
 
 
-        state_sym = pipeline(self.state)
 
         n_filters = 32
 
-        y = tf.layers.conv2d(self.state,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv1')
-#        y = tf.layers.batch_normalization(y,name='bn1',training=self.training,fused=True,renorm=True)
-        y = tf.layers.conv2d(y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv2')
-#        y = tf.layers.batch_normalization(y,name='bn2',training=self.training,fused=True,renorm=True)
-        y = tf.layers.conv2d(y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv3')
-#        y = tf.layers.batch_normalization(y,name='bn3',training=self.training,fused=True,renorm=True)
-        y = tf.layers.flatten(y)
+        y = tf.layers.flatten(self.state)
         y = tf.layers.dense(y,512,activation=tf.nn.relu,name='dense1')
-        y = tf.layers.dense(y,1,name='output')
+        y = tf.layers.dense(y,512,activation=tf.nn.relu,name='dense2')
 
-        losses = []
-        for states in state_sym:
-            _y = tf.layers.conv2d(states,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv1',reuse=True)
-#            _y = tf.layers.batch_normalization(_y,name='bn1',training=self.training,fused=True,renorm=True,reuse=True)
-            _y = tf.layers.conv2d(_y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv2',reuse=True)
-#            _y = tf.layers.batch_normalization(_y,name='bn2',training=self.training,fused=True,renorm=True,reuse=True)
-            _y = tf.layers.conv2d(_y,filters=n_filters,kernel_size=2,activation=tf.nn.relu,name='conv3',reuse=True)
-#            _y = tf.layers.batch_normalization(_y,name='bn3',training=self.training,fused=True,renorm=True,reuse=True)
-            _y = tf.layers.flatten(_y)
-            _y = tf.layers.dense(_y,512,activation=tf.nn.relu,name='dense1',reuse=True)
-            _y = tf.layers.dense(_y,1,name='output',reuse=True)
-            _loss = tf.losses.sigmoid_cross_entropy(self.label,_y)
-            losses.append(_loss)
+        self.value_logit = tf.layers.dense(y,1,name='value_logit')
+        self.value_pred = tf.sigmoid(self.value_logit,name='value_pred')
+        self.policy_logit = tf.layers.dense(y,IMG_H*IMG_W+1,name='policy_logit')
+        self.policy_pred = tf.nn.softmax(self.policy_logit,name='policy_pred')
 
-        self.logit = tf.identity(y,name='logit')
-        self.prob = tf.sigmoid(y,name='prob')
+        loss_value = tf.losses.sigmoid_cross_entropy(self.value_true,self.value_logit)
+        loss_policy = tf.losses.softmax_cross_entropy(self.policy_true,self.policy_logit)
 
-        #self.loss = tf.identity(tf.losses.sigmoid_cross_entropy(self.label,self.logit),name='loss')
-        self.loss = tf.reduce_mean(tf.stack(losses),name='loss')
+        self.loss = tf.add(loss_value,loss_policy,name='loss')
+
 
         self.optimizer = tf.train.AdamOptimizer()
 #        self.optimizer = tf.train.RMSPropOptimizer(0.001)
@@ -84,17 +67,19 @@ class Model:
             self.train_step = self.optimizer.minimize(self.loss,name='train_step')
 
     def train(self,sess,batch,step):
-#        _dict = {self.state:batch[0], self.cap_w:batch[1], self.cap_b:batch[2], self.label:batch[3]}
-        _dict = {self.state:batch[0], self.label:batch[1], self.training:True, self.g_step:step}
+        _dict = {self.state:batch[0], 
+                self.value_true:batch[1], 
+                self.policy_true:batch[2],
+                self.training:True, 
+                self.g_step:step}
         _loss, _ = sess.run([self.loss,self.train_step],feed_dict=_dict)
         return _loss
 
     def inference(self,sess,batch):
-#        _dict = {self.state:batch[0], self.cap_w:batch[1], self.cap_b:batch[2]}
-        _dict = {self.state:batch[0],self.training:False}
+        _dict = {self.state:batch,self.training:False}
         with self.graph.as_default():
-            _logit = sess.run([self.logit],feed_dict=_dict)
-        return _logit
+            _r = sess.run([self.value_pred,self.policy_pred],feed_dict=_dict)
+        return _r
 
     def save(self,sess):
         while True:
@@ -112,9 +97,10 @@ class Model:
             tf.saved_model.loader.load(sess,['graph'],EXP_DIR)
             self.graph = tf.get_default_graph()
             self.state = self.graph.get_tensor_by_name('state:0')
-#            self.cap_w = self.graph.get_tensor_by_name('cap_w:0')
-#            self.cap_b = self.graph.get_tensor_by_name('cap_b:0')
-            self.label = self.graph.get_tensor_by_name('label:0')
+            self.value_true = self.graph.get_tensor_by_name('value_true:0')
+            self.policy_true = self.graph.get_tensor_by_name('policy_true:0')
+            self.value_pred = self.graph.get_tensor_by_name('value_pred:0')
+            self.policy_pred = self.graph.get_tensor_by_name('policy_pred:0')
             self.training = self.graph.get_tensor_by_name('training:0')
 
             self.logit = self.graph.get_tensor_by_name('logit:0')

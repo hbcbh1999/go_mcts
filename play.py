@@ -1,11 +1,12 @@
 from game import GoGame
 #import agent
-from agent import Agent
+from agent_mcts import Agent
 import sys
 import numpy as np
 import argparse
 import os.path
 import random
+import pandas as pd
 """
 ARGUMENTS
 """
@@ -36,10 +37,14 @@ game = GoGame(boardsize)
 
 if black == 'agent' or white == 'agent' or interactive:
     if cycle == -1:
-        agent = Agent(eps=0)
+        agent = Agent(0.5)
     else:
-        agent = Agent(eps=1.0/(1+cycle))
+        agent = Agent(0.5)
 
+if save:
+    df = pd.DataFrame(columns=['board','color','policy','result'])
+    df_ep = pd.DataFrame(columns=['board','color','policy'])
+    
 ai_color = {'black':black, 'white':white}
 
 game_results = [0,0,0]
@@ -49,6 +54,7 @@ MAIN GAME LOOP
 """
 while True:
 
+    print(game.env.board)
     if interactive:
         game.print_board()
         vertex = raw_input('%s plays:'%game.current_color)
@@ -58,11 +64,12 @@ while True:
         legal_states = game.legal_states()
         ai_type = ai_color[game.current_color]
         if ai_type == 'agent':
-            vertex = agent.play(game.current_color,legal_states)
+            vertex = agent.play(game)
+            if save:
+                _dict = {'board':game.env.board,'color':game.current_color,'policy':agent.get_prob()}
+                df_ep = df_ep.append(_dict,ignore_index=True)
         elif ai_type == 'random':
-#            _tmp = np.random.randint(len(legal_states))
-#            vertex = legal_states[_tmp][0]
-            vertex = random.choice(legal_states.keys())
+            vertex = random.choice(list(legal_states.keys()))
             
     game.play(vertex) 
 
@@ -82,15 +89,20 @@ while True:
                 game_results[2] += 1
             ngames -= 1
             if save:
-                _n = 0
-                while os.path.isfile('%s/ep%d'%(save_dir,_n)):
-                    _n += 1
-                game.save('%s/ep%d'%(save_dir,_n))
+                if game.winner == 'black':
+                    r_map = {'black':1, 'white':0}
+                elif game.winner == 'white':
+                    r_map = {'black':0, 'white':1}
+                else:
+                    r_map = {'black':0.5, 'white':0.5}
+                df_ep['result'] = df_ep['color'].map(r_map)
+                df = df.append(df_ep)
             sys.stdout.write('\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]))
             sys.stdout.flush()
             if ngames == 0:
                 break
             else:
                 game.reset()
-            
-        
+
+
+df.to_pickle('test.pickle')
