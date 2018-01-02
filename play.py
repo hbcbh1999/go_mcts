@@ -11,13 +11,14 @@ import pandas as pd
 ARGUMENTS
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--interactive', default=False, help='Text interactive interface', action='store_true')
-parser.add_argument('--cycle', default=-1, type=int, help='Number of cycle')
-parser.add_argument('--black', default='random', choices=['agent','random'], help='AI for black')
-parser.add_argument('--white', default='random', choices=['agent','random'], help='AI for white')
-parser.add_argument('--ngames', default=500, type=int, help='Number of episodes to play')
-parser.add_argument('--save', default=False, help='Save self-play episodes', action='store_true')
-parser.add_argument('--save_dir', default='./data',type=str,help='Directory for save')
+parser.add_argument('--interactive',default=False,help='Text interactive interface',action='store_true')
+parser.add_argument('--cycle',default=-1,type=int,help='Number of cycle')
+parser.add_argument('--black',default='random',choices=['agent','random'],help='AI for black')
+parser.add_argument('--white',default='random',choices=['agent','random'],help='AI for white')
+parser.add_argument('--ngames',default=500,type=int,help='Number of episodes to play')
+parser.add_argument('--save',default=False,help='Save self-play episodes',action='store_true')
+parser.add_argument('--save_dir',default='./data/',type=str,help='Directory for save')
+parser.add_argument('--save_file',default='data',type=str,help='Filename to save')
 args = parser.parse_args()
 
 interactive = args.interactive
@@ -27,7 +28,7 @@ white = args.white
 ngames = args.ngames
 save = args.save
 save_dir = args.save_dir
-
+save_file = args.save_file
 """
 SOME INITS
 """
@@ -54,7 +55,7 @@ MAIN GAME LOOP
 """
 while True:
 
-    print(game.env.board)
+    #print(game.env.board)
     if interactive:
         game.print_board()
         vertex = raw_input('%s plays:'%game.current_color)
@@ -96,7 +97,7 @@ while True:
                 else:
                     r_map = {'black':0.5, 'white':0.5}
                 df_ep['result'] = df_ep['color'].map(r_map)
-                df = df.append(df_ep)
+                df = pd.concat([df,df_ep],ignore_index=True)
             sys.stdout.write('\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]))
             sys.stdout.flush()
             if ngames == 0:
@@ -104,5 +105,5 @@ while True:
             else:
                 game.reset()
 
-
-df.to_pickle('test.pickle')
+if save:
+    df.to_pickle(save_dir+save_file)

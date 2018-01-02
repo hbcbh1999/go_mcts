@@ -8,16 +8,20 @@ from pygo_tt import Env
 from copy import deepcopy
 
 class Tree:
-    def __init__(self,p,parent,game):
+    def __init__(self,p,parent):
         self.n = 0
         self.w = 0
         self.q = 0
         self.p = p
         self.parent = parent
-        self.game = game
         self.child = []
         self.vertex = None  
-        
+        self.visited = False
+        self.game = None
+    def copy_and_play(self):
+        self.game = deepcopy(self.parent.game)
+        self.game.play(self.vertex)
+        self.visited = True
 
 class Agent:
     def __init__(self,conf):
@@ -44,15 +48,13 @@ class Agent:
                 p[(i,j)] = _r[1][0][9*i+j]
         p['pass'] = _r[1][0][-1]
         return v, p
-    def mcts(self):
-        root_node = self.root
+    def mcts(self,root_node):
         
         curr_node = root_node
 
         #select
         while len(curr_node.child) > 0:
             u = []
-            tmp = []
             n_sum = 0
             for c in curr_node.child:
                 n_sum += c.n
@@ -66,34 +68,43 @@ class Agent:
                     max_val = val
                     max_i = i
             curr_node = curr_node.child[i]
-            if curr_node.game.end:
-                break
 
         #expand
-        value, policy = self.evaluate(curr_node) 
+        if not curr_node.visited:
+            curr_node.copy_and_play()
         if not curr_node.game.end:
+            value, policy = self.evaluate(curr_node)
             legals = curr_node.game.legal_states()
             for k, v in legals.items():
                 p = policy[k]
-                g = deepcopy(curr_node.game)
-                g.play(k)
-                new_child = Tree(p,curr_node,g)
+                new_child = Tree(p,curr_node)
                 new_child.vertex = k
                 curr_node.child.append(new_child)
-
+        else:
+            if curr_node.game.winner == curr_node.game.current_color:
+                value = 0.
+            else:
+                value = 1.
         #backup
+        color = curr_node.game.current_color 
         while curr_node is not root_node:
             curr_node.n += 1
-            curr_node.w += value
+            if curr_node.game.current_color == color:
+                curr_node.w += value
+            else:
+                curr_node.w += (1-value)
             curr_node.q = curr_node.w/curr_node.n
             curr_node = curr_node.parent
 
     def play(self,game):
-        self.root = Tree(1,None,game) 
+        self.root = Tree(1,None) 
+        self.root.game = deepcopy(game)
+        self.root.visited = True
 
-        sims = 2
+        sims = 200
+
         for i in range(sims):
-            self.mcts()
+            self.mcts(self.root)
         
         temp = 1.
         n_s = np.zeros((9*9+1,))
