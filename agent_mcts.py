@@ -95,9 +95,9 @@ class Agent:
         while curr_node is not root_node:
             curr_node.n += 1
             if curr_node.game.current_color == color:
-                curr_node.w += value
-            else:
                 curr_node.w += (1-value)
+            else:
+                curr_node.w += value
             curr_node.q = curr_node.w/curr_node.n
             curr_node = curr_node.parent
 
