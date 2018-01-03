@@ -37,10 +37,8 @@ boardsize = 9
 game = GoGame(boardsize)
 
 if black == 'agent' or white == 'agent' or interactive:
-    if cycle == -1:
-        agent = Agent(0.5)
-    else:
-        agent = Agent(0.5)
+    agent = Agent(0.5,100)
+    agent.set_root(game)
 
 if save:
     df = pd.DataFrame(columns=['board','color','policy','result'])
@@ -55,7 +53,7 @@ MAIN GAME LOOP
 """
 while True:
 
-    #print(game.env.board)
+    print(game.env.board)
     if interactive:
         game.print_board()
         vertex = raw_input('%s plays:'%game.current_color)
@@ -65,7 +63,7 @@ while True:
         legal_states = game.legal_states()
         ai_type = ai_color[game.current_color]
         if ai_type == 'agent':
-            vertex = agent.play(game)
+            vertex = agent.play()
             if save:
                 _dict = {'board':game.env.board,'color':game.current_color,'policy':agent.get_prob()}
                 df_ep = df_ep.append(_dict,ignore_index=True)
@@ -73,7 +71,8 @@ while True:
             vertex = random.choice(list(legal_states.keys()))
             
     game.play(vertex) 
-
+    if black == 'agent' or white == 'agent':
+        agent.update_root(vertex)
     if game.end:
         if interactive:
             play_more = raw_input('Play more?')
@@ -104,6 +103,7 @@ while True:
                 break
             else:
                 game.reset()
+                agent.set_root(game)
 
 if save:
     df.to_pickle(save_dir+save_file)
