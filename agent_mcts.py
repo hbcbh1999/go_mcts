@@ -43,7 +43,7 @@ class Agent:
         state = np.concatenate((board,back),axis=2)
 
         _r = self.model.inference(self.sess,[state])
-        v = _r[0][0]
+        v = _r[0][0][0]
 
         p = {}
         for i in range(9):
@@ -70,6 +70,7 @@ class Agent:
                 if val > max_val:
                     max_val = val
                     max_i = i
+            input()
             curr_node = curr_node.child[i]
 
         #expand
@@ -111,7 +112,6 @@ class Agent:
                 n_s[-1] = c.n**(1/temp)
             else:
                 n_s[9*c.vertex[0]+c.vertex[1]] = c.n**(1/temp)
-
         self.p = n_s/np.sum(n_s)
         a_s = np.arange(len(n_s))
         idx = np.random.choice(np.arange(82),p=self.p)
