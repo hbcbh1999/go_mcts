@@ -103,8 +103,6 @@ class Model:
             self.policy_pred = self.graph.get_tensor_by_name('policy_pred:0')
             self.training = self.graph.get_tensor_by_name('training:0')
 
-            self.logit = self.graph.get_tensor_by_name('logit:0')
-            self.prob = self.graph.get_tensor_by_name('prob:0')
             self.loss = self.graph.get_tensor_by_name('loss:0')
             self.g_step = self.graph.get_tensor_by_name('g_step:0')
             self.train_step = self.graph.get_operation_by_name('train_step')
