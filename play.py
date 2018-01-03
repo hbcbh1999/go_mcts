@@ -37,7 +37,7 @@ boardsize = 9
 game = GoGame(boardsize)
 
 if black == 'agent' or white == 'agent' or interactive:
-    agent = Agent(0.5,100)
+    agent = Agent(3.0,1000)
     agent.set_root(game)
 
 if save:
@@ -53,7 +53,7 @@ MAIN GAME LOOP
 """
 while True:
 
-    print(game.env.board)
+#    print(game.env.board)
     if interactive:
         game.print_board()
         vertex = raw_input('%s plays:'%game.current_color)
