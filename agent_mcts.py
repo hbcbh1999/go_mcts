@@ -30,7 +30,9 @@ class Agent:
         self.c = conf
         self.sims = sims
         self.model = Model()
-        self.sess = tf.Session()
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        self.sess = tf.Session(config=config)
         self.model.load(self.sess)
     def evaluate(self,node):
         board = np.copy(node.game.env.board)
