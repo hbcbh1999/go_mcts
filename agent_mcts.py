@@ -69,10 +69,12 @@ class Agent:
             for i in range(len(u)):
                 u[i] *= np.sqrt(n_sum)
                 val = u[i]+curr_node.child[i].q
+#                print(u[i],curr_node.child[i].q,curr_node.child[i].n,curr_node.child[i].p)
                 if val > max_val:
                     max_val = val
                     max_i = i
-            curr_node = curr_node.child[i]
+#            input()
+            curr_node = curr_node.child[max_i]
 
         #expand
         if not curr_node.visited:
