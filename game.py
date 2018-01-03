@@ -56,9 +56,7 @@ class GoGame:
     def clone(self):
         tmp = GoGame.__new__(GoGame)
         for k, v in list(self.__dict__.items()):
-            if k is not 'env':
-                setattr(tmp,k,v)
-            else:
+            if k is 'env':
                 env_tmp = Env.__new__(Env)
                 env_tmp.neighbors = self.env.neighbors
                 env_tmp.boardsize = self.env.boardsize
@@ -69,4 +67,8 @@ class GoGame:
                 env_tmp.komi = self.env.komi
                 env_tmp.history = [x for x in self.env.history]
                 tmp.env = env_tmp
+            elif k is 'history':
+                tmp.history = self.env.history.copy()
+            else:
+                setattr(tmp,k,v)
         return tmp
