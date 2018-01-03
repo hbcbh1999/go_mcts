@@ -6,6 +6,7 @@ import  sys
 sys.path.append('/home/rick/project/pygo_tt')
 from pygo_tt import Env
 from copy import deepcopy
+import pickle
 
 class Tree:
     def __init__(self,p,parent):
@@ -19,18 +20,20 @@ class Tree:
         self.visited = False
         self.game = None
     def copy_and_play(self):
-        self.game = deepcopy(self.parent.game)
+#        self.game = deepcopy(self.parent.game)
+        self.game = self.parent.game.clone()
         self.game.play(self.vertex)
         self.visited = True
 
 class Agent:
-    def __init__(self,conf):
+    def __init__(self,conf,sims):
         self.c = conf
+        self.sims = sims
         self.model = Model()
         self.sess = tf.Session()
         self.model.load(self.sess)
     def evaluate(self,node):
-        board = deepcopy(node.game.env.board)
+        board = np.copy(node.game.env.board)
         board.shape += (1,)
         if node.game.current_color == 'black':
             back = np.ones((9,9,1))
@@ -96,14 +99,9 @@ class Agent:
             curr_node.q = curr_node.w/curr_node.n
             curr_node = curr_node.parent
 
-    def play(self,game):
-        self.root = Tree(1,None) 
-        self.root.game = deepcopy(game)
-        self.root.visited = True
+    def play(self):
 
-        sims = 200
-
-        for i in range(sims):
+        for i in range(self.sims):
             self.mcts(self.root)
         
         temp = 1.
@@ -131,3 +129,13 @@ class Agent:
 
     def get_prob(self):
         return self.p
+    def set_root(self,game):
+        self.root = Tree(1,None)
+#        self.root.game = deepcopy(game)
+        self.root.game = game.clone()
+        self.root.visited = True
+    def update_root(self,vertex):
+        for c in self.root.child:
+            if c.vertex == vertex:
+                self.root = c
+                break
