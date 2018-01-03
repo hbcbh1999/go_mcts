@@ -70,7 +70,6 @@ class Agent:
                 if val > max_val:
                     max_val = val
                     max_i = i
-            input()
             curr_node = curr_node.child[i]
 
         #expand
