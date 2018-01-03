@@ -87,9 +87,9 @@ class Agent:
                 curr_node.child.append(new_child)
         else:
             if curr_node.game.winner == curr_node.game.current_color:
-                value = 0.
-            else:
                 value = 1.
+            else:
+                value = 0.
         #backup
         color = curr_node.game.current_color 
         while curr_node is not root_node:
