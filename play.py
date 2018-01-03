@@ -16,6 +16,8 @@ parser.add_argument('--cycle',default=-1,type=int,help='Number of cycle')
 parser.add_argument('--black',default='random',choices=['agent','random'],help='AI for black')
 parser.add_argument('--white',default='random',choices=['agent','random'],help='AI for white')
 parser.add_argument('--ngames',default=500,type=int,help='Number of episodes to play')
+parser.add_argument('--mcts_sims',default=500,type=int,help='Number of MCTS sims')
+parser.add_argument('--mcts_const',default=5.0,type=float,help='PUCT constant')
 parser.add_argument('--save',default=False,help='Save self-play episodes',action='store_true')
 parser.add_argument('--save_dir',default='./data/',type=str,help='Directory for save')
 parser.add_argument('--save_file',default='data',type=str,help='Filename to save')
@@ -26,6 +28,8 @@ cycle = args.cycle
 black = args.black
 white = args.white
 ngames = args.ngames
+mcts_sims = args.mcts_sims
+mcts_const = args.mcts_const
 save = args.save
 save_dir = args.save_dir
 save_file = args.save_file
@@ -37,7 +41,7 @@ boardsize = 9
 game = GoGame(boardsize)
 
 if black == 'agent' or white == 'agent' or interactive:
-    agent = Agent(3.0,1000)
+    agent = Agent(mcts_const,mcts_sims)
     agent.set_root(game)
 
 if save:
