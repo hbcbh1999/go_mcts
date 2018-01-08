@@ -9,16 +9,15 @@ from copy import deepcopy
 import pickle
 
 class Tree:
-    def __init__(self,p,parent):
-        self.n = 0
-        self.w = 0
-        self.q = 0
-        self.p = p
+    def __init__(self,parent,idx=None,vertex=None):
         self.parent = parent
         self.child = []
-        self.vertex = None  
+        #n,w,p,q
+        self.child_stats = None
+        self.vertex = vertex  
         self.visited = False
         self.game = None
+        self.idx = idx
     def copy_and_play(self):
 #        self.game = deepcopy(self.parent.game)
         self.game = self.parent.game.clone()
@@ -58,34 +57,33 @@ class Agent:
         curr_node = root_node
 
         #select
-        while len(curr_node.child) > 0:
-            u = []
-            n_sum = 0
-            for c in curr_node.child:
-                n_sum += c.n
-                u.append(self.c*c.p/(1+c.n))
-            max_i = 0
-            max_val = -1
-            for i in range(len(u)):
-                u[i] *= np.sqrt(n_sum)
-                val = u[i]+curr_node.child[i].q
-#                print(u[i],curr_node.child[i].q,curr_node.child[i].n,curr_node.child[i].p)
-                if val > max_val:
-                    max_val = val
-                    max_i = i
-#            input()
+        while curr_node.child:
+            n_child = len(curr_node.child)
+
+            #n,p,q
+            _stats = curr_node.child_stats
+
+            _v = _stats[3] + self.c * np.sqrt(np.sum(_stats[0])) * _stats[2] / ( 1 + _stats[0] ) 
+
+            max_i = np.argmax(_v)
+
             curr_node = curr_node.child[max_i]
 
         #expand
         if not curr_node.visited:
             curr_node.copy_and_play()
         if not curr_node.game.end:
+
             value, policy = self.evaluate(curr_node)
             legals = curr_node.game.legal_states()
-            for k, v in legals.items():
-                p = policy[k]
-                new_child = Tree(p,curr_node)
-                new_child.vertex = k
+
+            curr_node.child_stats = np.zeros((4,len(legals)))
+            _stats = curr_node.child_stats
+
+            for i, (k, v) in enumerate(legals.items()):
+                _stats[2][i] = policy[k]
+                _stats[3][i] = 1
+                new_child = Tree(curr_node,idx=i,vertex=k)
                 curr_node.child.append(new_child)
         else:
             if curr_node.game.winner == curr_node.game.current_color:
@@ -95,13 +93,15 @@ class Agent:
         #backup
         color = curr_node.game.current_color 
         while curr_node is not root_node:
-            curr_node.n += 1
+            parent = curr_node.parent
+            curr_idx = curr_node.idx
+            parent.child_stats[0][curr_idx] += 1
             if curr_node.game.current_color == color:
-                curr_node.w += (1-value)
+                parent.child_stats[1][curr_idx] += (1-value)
             else:
-                curr_node.w += value
-            curr_node.q = curr_node.w/curr_node.n
-            curr_node = curr_node.parent
+                parent.child_stats[1][curr_idx] += value
+            parent.child_stats[3][curr_idx] = parent.child_stats[1][curr_idx] / parent.child_stats[0][curr_idx]
+            curr_node = parent
 
     def play(self):
 
@@ -109,19 +109,15 @@ class Agent:
             self.mcts(self.root)
         
         temp = 1.
-        n_s = np.zeros((9*9+1,))
-        for c in self.root.child:
-            if c.vertex == 'pass':
-                n_s[-1] = c.n**(1/temp)
-            else:
-                n_s[9*c.vertex[0]+c.vertex[1]] = c.n**(1/temp)
-        self.p = n_s/np.sum(n_s)
-        a_s = np.arange(len(n_s))
-        idx = np.random.choice(np.arange(82),p=self.p)
-        if idx == 81:
-            return 'pass'
-        else:
-            return (idx//9,idx%9)
+
+        n_temp = self.root.child_stats[0] ** (1/temp)
+        self.prob = n_temp / np.sum(n_temp)
+
+        c_idx = np.random.choice(len(self.prob),p=self.prob)
+        
+        c_v = self.root.child[c_idx].vertex
+
+        return c_v
 
     def get_state(self):
         if self.root.game.current_color == 'black':
@@ -131,7 +127,15 @@ class Agent:
         return np.concatenate((self.root.game.env.board,back),axis=2)
 
     def get_prob(self):
-        return self.p
+        p_map = np.zeros(9*9+1)
+        for i, p in enumerate(self.prob):
+            _v = self.root.child[i].vertex
+            if _v == 'pass':
+                p_map[-1] = p
+            else:
+                idx = _v[0] * 9 + _v[1]
+                p_map[idx] = p
+        return p_map
     def set_root(self,game):
         self.root = Tree(1,None)
 #        self.root.game = deepcopy(game)
@@ -141,4 +145,7 @@ class Agent:
         for c in self.root.child:
             if c.vertex == vertex:
                 self.root = c
+                if not c.visited:
+                    c.copy_and_play()
+                c.parent = None
                 break
