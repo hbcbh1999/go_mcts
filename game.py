@@ -23,14 +23,14 @@ class GoGame:
         self.last_vertex = ''
         self.end = False
         self.winner = None
-        self.history = []
+        self.n_plays = 0
     def play(self,vertex):
+        self.n_plays += 1
         if (vertex == self.last_vertex and vertex == 'pass') or vertex == 'resign':
             self.force_end()
         elif vertex != 'pass':
             self.env.play(self.current_color,vertex)
-        self.history.append(self.env.board)
-        if len(self.history) > 2 * self.boardsize ** 2:
+        if self.n_plays > 2 * self.boardsize ** 2:
             self.force_end()
         self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
