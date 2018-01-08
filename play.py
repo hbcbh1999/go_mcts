@@ -45,8 +45,8 @@ if black == 'agent' or white == 'agent' or interactive:
     agent.set_root(game)
 
 if save:
-    df = pd.DataFrame(columns=['board','color','policy','result'])
-    df_ep = pd.DataFrame(columns=['board','color','policy'])
+    df = pd.DataFrame(columns=['board','color','policy','vertex','result'])
+    df_ep = pd.DataFrame(columns=['board','color','policy','vertex'])
     
 ai_color = {'black':black, 'white':white}
 
@@ -69,7 +69,7 @@ while True:
         if ai_type == 'agent':
             vertex = agent.play()
             if save:
-                _dict = {'board':game.env.board,'color':game.current_color,'policy':agent.get_prob()}
+                _dict = {'board':game.env.board,'color':game.current_color,'policy':agent.get_prob(),'vertex':vertex}
                 df_ep = df_ep.append(_dict,ignore_index=True)
         elif ai_type == 'random':
             vertex = random.choice(list(legal_states.keys()))
