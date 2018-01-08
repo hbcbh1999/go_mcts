@@ -22,6 +22,14 @@ def pipeline(states):
 
     return rot+flip_rot
 
+def residual_block(x,kernel_size):
+    f = x.shape[-1]
+    y = tf.layers.conv2d(x,filters=f,kernel_size=kernel_size,activation=tf.nn.relu,padding='same')
+    y = tf.layers.conv2d(y,filters=f,kernel_size=kernel_size,activation=tf.nn.relu,padding='same')
+    y = x + y
+    return y
+
+
 class Model:
     def __init__(self):
 
@@ -38,29 +46,29 @@ class Model:
 
 
         n_filters = 32
+        y = tf.layers.conv2d(self.state,filters=n_filters,kernel_size=3,activation=tf.nn.relu,name='conv1')
+        for i in range(5):
+            y = residual_block(y,3)
+        y_flat = tf.layers.flatten(y)
 
-        y = tf.layers.flatten(self.state)
-        y = tf.layers.dense(y,512,activation=tf.nn.relu,name='dense1')
-        y = tf.layers.dense(y,512,activation=tf.nn.relu,name='dense2')
-
-        self.value_logit = tf.layers.dense(y,1,name='value_logit')
+        self.value_logit = tf.layers.dense(y_flat,1,name='value_logit')
         self.value_pred = tf.sigmoid(self.value_logit,name='value_pred')
-        self.policy_logit = tf.layers.dense(y,IMG_H*IMG_W+1,name='policy_logit')
+        self.policy_logit = tf.layers.dense(y_flat,IMG_H*IMG_W+1,name='policy_logit')
         self.policy_pred = tf.nn.softmax(self.policy_logit,name='policy_pred')
 
-        loss_value = tf.losses.sigmoid_cross_entropy(self.value_true,self.value_logit)
-        loss_policy = tf.losses.softmax_cross_entropy(self.policy_true,self.policy_logit)
+        self.loss_value = tf.losses.sigmoid_cross_entropy(self.value_true,self.value_logit)
+        self.loss_policy = tf.losses.softmax_cross_entropy(self.policy_true,self.policy_logit)
 
-        self.loss = tf.add(loss_value,loss_policy,name='loss')
+        self.loss = tf.add(self.loss_value,self.loss_policy,name='loss')
 
 
-        self.optimizer = tf.train.AdamOptimizer()
+#        self.optimizer = tf.train.AdamOptimizer()
 #        self.optimizer = tf.train.RMSPropOptimizer(0.001)
 #        self.optimizer = tf.train.GradientDescentOptimizer(0.01)
         self.g_step = tf.placeholder(tf.int32,name='g_step')
-#        lr_init = 0.1
+        lr_init = 0.01
 #        lr = tf.train.exponential_decay(lr_init,self.g_step,20000,0.1,staircase=True)
-#        self.optimizer = tf.train.MomentumOptimizer(lr_init,0.9,use_nesterov=True)
+        self.optimizer = tf.train.MomentumOptimizer(lr_init,0.9,use_nesterov=True)
     #            self.optimizer = tf.train.GradientDescentOptimizer(0.01)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
