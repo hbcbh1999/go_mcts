@@ -73,7 +73,7 @@ while True:
                 df_ep = df_ep.append(_dict,ignore_index=True)
         elif ai_type == 'random':
             vertex = random.choice(list(legal_states.keys()))
-            
+    #print(game.env.board,vertex,game.current_color)            
     game.play(vertex) 
     if black == 'agent' or white == 'agent':
         agent.update_root(vertex)
@@ -101,6 +101,7 @@ while True:
                     r_map = {'black':0.5, 'white':0.5}
                 df_ep['result'] = df_ep['color'].map(r_map)
                 df = pd.concat([df,df_ep],ignore_index=True)
+                df_ep = df_ep[0:0]
             sys.stdout.write('\rGames remaining:%d Results(b/w/d):%d/%d/%d'%(ngames,game_results[0],game_results[1],game_results[2]))
             sys.stdout.flush()
             if ngames == 0:
@@ -108,6 +109,6 @@ while True:
             else:
                 game.reset()
                 agent.set_root(game)
-
+print()
 if save:
     df.to_pickle(save_dir+save_file)
