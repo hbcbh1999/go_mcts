@@ -138,14 +138,16 @@ class Agent:
         return p_map
     def set_root(self,game):
         self.root = Tree(1,None)
-#        self.root.game = deepcopy(game)
         self.root.game = game.clone()
         self.root.visited = True
     def update_root(self,vertex):
+        #print(self.root.game.env.board,self.root.game.current_color,len(self.root.child))
         for c in self.root.child:
             if c.vertex == vertex:
                 self.root = c
                 if not c.visited:
                     c.copy_and_play()
                 c.parent = None
-                break
+                return
+        self.root.game.play(vertex)
+        return 
