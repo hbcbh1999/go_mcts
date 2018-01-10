@@ -38,21 +38,23 @@ for file_name in list_of_data:
     
 df = pd.concat(dfs,ignore_index=True)
 
-states = []
-policy = np.stack(df['policy'].values)
-labels = df['result'].values
-labels.shape += (1,)
-for idx, row in df.iterrows():
-    s = np.array(row['board'])
-    s.shape += (1,)
-    if row['color'] == 'black':
-        back = np.ones(s.shape)
-    else:
-        back = np.zeros(s.shape)
-    s = np.concatenate([s,back],axis=2)
-    states.append(s)
+b_shape = df['board'][0].shape
 
-states = np.array(states)
+white_back = np.zeros(b_shape)
+black_back = np.ones(b_shape)
+
+back_map = {'black':black_back,'white':white_back}
+
+back = df['color'].map(back_map)
+backs = np.stack(back.values)
+
+boards = np.stack(df['board'].values)
+states = np.stack([boards,backs],axis=-1)
+print(states.shape)
+policy = np.stack(df['policy'].values)
+labels = np.stack(df['result'].values)[:,None]
+print(labels.shape)
+
 """
 ''' ROTATION AUG '''
 #_states = np.concatenate([_states,np.rot90(_states,1,(1,2)),np.rot90(_states,2,(1,2)),np.rot90(_states,3,(1,2))])
@@ -72,7 +74,6 @@ _label.shape += (1,)
 
 n_data = len(states)
 
-#iters = min(epochs*n_data/batch_size,100000)
 iters = epochs*n_data/batch_size
 
 loss_ma = 0
@@ -89,7 +90,6 @@ with tf.Session() as sess:
     for i in range(int(iters)):
 
         idx = np.random.randint(n_data,size=batch_size)
-        #batch = [_states[idx],_b_cap[idx],_w_cap[idx],_label[idx]]
         batch = [states[idx],labels[idx],policy[idx]]
         
         loss = m.train(sess,batch,i)
@@ -100,3 +100,6 @@ with tf.Session() as sess:
         sys.stdout.flush()
     
     m.save(sess)
+
+sys.stdout.write('\n')
+sys.stdout.flush()
