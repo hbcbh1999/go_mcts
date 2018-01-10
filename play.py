@@ -109,6 +109,14 @@ while True:
             else:
                 game.reset()
                 agent.set_root(game)
-print()
+
+sys.stdout.write('\n')
+sys.stdout.flush()
+
 if save:
-    df.to_pickle(save_dir+save_file)
+    df['cycle']=cycle
+    _save = save_dir + save_file
+    if os.path.isfile(_save):
+        df_old = pd.read_pickle(_save)
+        df = pd.concat([df_old,df],ignore_index=True)
+    df.to_pickle(_save)
