@@ -79,12 +79,19 @@ class Agent:
 
             curr_node.child_stats = np.zeros((4,len(legals)))
             _stats = curr_node.child_stats
-
+            """
             for i, (k, v) in enumerate(legals.items()):
                 _stats[2][i] = policy[k]
-                _stats[3][i] = 1
+                _stats[3][i] = 0.
                 new_child = Tree(curr_node,idx=i,vertex=k)
                 curr_node.child.append(new_child)
+            """
+            for i, v in enumerate(legals):
+                _stats[2][i] = policy[v]
+                _stats[3][i] = 0.
+                new_child = Tree(curr_node,idx=i,vertex=v)
+                curr_node.child.append(new_child)
+
         else:
             if curr_node.game.winner == curr_node.game.current_color:
                 value = 1.
