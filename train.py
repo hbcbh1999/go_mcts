@@ -12,21 +12,26 @@ import pandas as pd
 ARGS
 """
 parser = argparse.ArgumentParser()
+parser.add_argument('--cycle',default=-1,type=int,help='Cycle (default:-1)')
 parser.add_argument('--new',default=False,help='Create a new model instead of training the old one',action='store_true')
 parser.add_argument('--batch_size',default=32,type=int,help='Batch size (default:32)')
 parser.add_argument('--epochs',default=10,type=int,help='Training epochs (default:10)')
-parser.add_argument('--max_iters',default=100000,type=int,help='Training epochs (default:10)')
+parser.add_argument('--max_iters',default=100000,type=int,help='Max training iterations (default:100000)')
 parser.add_argument('--data_dir',default=['./data'],nargs='*',help='Training data directories (default:./data/ep*)')
 parser.add_argument('--n_episodes',default=-1,type=int,help='Number of training episodes (randomly chosen)')
+parser.add_argument('--save_loss',default=False,help='Save loss history',action='store_true')
+parser.add_argument('--save_interval',default=100,type=int,help='Number of iterations between save_loss')
 args = parser.parse_args()
 
+cycle = args.cycle
 new = args.new
 batch_size = args.batch_size
 epochs = args.epochs
 data_dir = args.data_dir
 n_episodes = args.n_episodes
 max_iters = args.max_iters
-
+save_loss = args.save_loss
+save_interval = args.save_interval
 """ LOAD DATA """
 
 list_of_data = []
@@ -79,6 +84,9 @@ iters = epochs*n_data/batch_size
 loss_ma = 0
 decay = 0.99
 
+if save_loss:
+    loss_history = []
+
 with tf.Session() as sess:
     m = Model()
     if new:
@@ -98,8 +106,20 @@ with tf.Session() as sess:
 
         sys.stdout.write('\riter:%d/%d loss: %.5f'%(i,iters,loss_ma))
         sys.stdout.flush()
-    
+
+        if i % save_interval == 0 and save_loss:
+            loss_history.append(loss)
+
+  
     m.save(sess)
+
+if save_loss:
+    loss_file = 'data/loss'
+    df = pd.DataFrame(loss_history,columns=['loss'])
+    if os.path.isfile(loss_file):
+        df_old = pd.read_pickle(loss_file)
+        df = pd.concat([df_old,df],ignore_index=True)
+    df.to_pickle(loss_file)
 
 sys.stdout.write('\n')
 sys.stdout.flush()
