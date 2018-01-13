@@ -1,5 +1,6 @@
 import sys
-sys.path.append('/home/rick/project/pygo_tt')
+from os.path import dirname
+sys.path.append(dirname(__file__)+'/../../pygo_tt')
 from pygo_tt import Env
 import os.path
 import pickle
@@ -30,7 +31,7 @@ class GoGame:
             self.force_end()
         elif vertex != 'pass':
             self.env.play(self.current_color,vertex)
-        if self.n_plays > 2 * self.boardsize ** 2:
+        if self.n_plays > 1.5 * self.boardsize ** 2:
             self.force_end()
         self.last_vertex = vertex
         self.current_color = swap_color(self.current_color)
@@ -66,6 +67,7 @@ class GoGame:
                 env_tmp.board = np.copy(self.env.board)
                 env_tmp.komi = self.env.komi
                 env_tmp.history = [x for x in self.env.history]
+                env_tmp.legal_boards = self.env.legal_boards.copy()
                 tmp.env = env_tmp
             elif k is 'history':
                 tmp.history = self.env.history.copy()
