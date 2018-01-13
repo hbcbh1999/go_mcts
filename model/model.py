@@ -45,10 +45,12 @@ class Model:
 
 
 
-        n_filters = 32
-        y = tf.layers.conv2d(self.state,filters=n_filters,kernel_size=3,activation=tf.nn.relu,name='conv1')
-        for i in range(5):
-            y = residual_block(y,3)
+        n_filters = 64
+        k_size = 3
+        y = tf.layers.conv2d(self.state,filters=n_filters,kernel_size=k_size,activation=tf.nn.relu)
+        y = tf.layers.conv2d(y,filters=n_filters,kernel_size=k_size,activation=tf.nn.relu)
+#        for i in range(5):
+#            y = residual_block(y,k_size)
         y_flat = tf.layers.flatten(y)
 
         self.value_logit = tf.layers.dense(y_flat,1,name='value_logit')
@@ -66,10 +68,11 @@ class Model:
 #        self.optimizer = tf.train.RMSPropOptimizer(0.001)
 #        self.optimizer = tf.train.GradientDescentOptimizer(0.01)
         self.g_step = tf.placeholder(tf.int32,name='g_step')
-        lr_init = 0.01
-#        lr = tf.train.exponential_decay(lr_init,self.g_step,20000,0.1,staircase=True)
-        self.optimizer = tf.train.MomentumOptimizer(lr_init,0.9,use_nesterov=True)
-    #            self.optimizer = tf.train.GradientDescentOptimizer(0.01)
+        lr_init = 0.0001
+#        lr = tf.train.exponential_decay(lr_init,self.g_step,30000,0.1,staircase=True)
+        lr = lr_init
+        self.optimizer = tf.train.MomentumOptimizer(lr,0.99,use_nesterov=True)
+#        self.optimizer = tf.train.GradientDescentOptimizer(lr)
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             self.train_step = self.optimizer.minimize(self.loss,name='train_step')
