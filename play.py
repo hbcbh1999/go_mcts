@@ -72,7 +72,8 @@ while True:
                 _dict = {'board':game.env.board,'color':game.current_color,'policy':agent.get_prob(),'vertex':vertex}
                 df_ep = df_ep.append(_dict,ignore_index=True)
         elif ai_type == 'random':
-            vertex = random.choice(list(legal_states.keys()))
+#            vertex = random.choice(list(legal_states.keys()))
+            vertex = random.choice(legal_states)
     #print(game.env.board,vertex,game.current_color)            
     game.play(vertex) 
     if black == 'agent' or white == 'agent':
