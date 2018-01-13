@@ -79,7 +79,7 @@ _label.shape += (1,)
 
 n_data = len(states)
 
-iters = epochs*n_data/batch_size
+iters = int(min(epochs*n_data//batch_size,max_iters))
 
 loss_ma = 0
 decay = 0.99
@@ -95,7 +95,7 @@ with tf.Session() as sess:
     else:
         m.load(sess)
     
-    for i in range(min(int(iters),max_iters)):
+    for i in range(iters):
 
         idx = np.random.randint(n_data,size=batch_size)
         batch = [states[idx],labels[idx],policy[idx]]
